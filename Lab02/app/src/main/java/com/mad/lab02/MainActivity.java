@@ -14,25 +14,25 @@ public class MainActivity extends AppCompatActivity
         implements DailyOffer.OnFragmentInteractionListener, Reservation.OnFragmentInteractionListener{
 
     private TextView mTextMessage;
+
     private Fragment actualFragment = null;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.navigation_home:
                     mTextMessage.setText(R.string.title_home);
-                    fragmentManager(null, 0);
+                    fragmentManager(null);
                     return true;
                 case R.id.navigation_dashboard:
                     mTextMessage.setText(R.string.title_dashboard);
-                    fragmentManager(actualFragment = new DailyOffer(), R.id.daily_offer_fragment);
+                    fragmentManager(actualFragment = new DailyOffer());
                     return true;
                 case R.id.navigation_notifications:
                     mTextMessage.setText(R.string.title_notifications);
-                    fragmentManager(actualFragment = new Reservation(), R.id.reservation_fragment);
+                    fragmentManager(actualFragment = new Reservation());
                     return true;
             }
             return false;
@@ -49,13 +49,13 @@ public class MainActivity extends AppCompatActivity
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
 
-    private void fragmentManager(Fragment f, int id){
+    private void fragmentManager(Fragment f){
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         if(f == null){
             getSupportFragmentManager().beginTransaction().remove(actualFragment).commit();
         }
         else{
-            ft.replace(id, f);
+            ft.replace(R.id.fragment_container, f);
             ft.commit();
         }
     }
