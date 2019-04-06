@@ -11,28 +11,25 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity
-        implements DailyOffer.OnFragmentInteractionListener, Reservation.OnFragmentInteractionListener{
-
-    private TextView mTextMessage;
-
-    private Fragment actualFragment = null;
+        implements DailyOffer.OnFragmentInteractionListener, Reservation.OnFragmentInteractionListener, Home.OnFragmentInteractionListener, Profile.OnFragmentInteractionListener{
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.navigation_home:
-                    mTextMessage.setText(R.string.title_home);
-                    fragmentManager(null);
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Home()).commit();
                     return true;
-                case R.id.navigation_dashboard:
-                    mTextMessage.setText(R.string.title_dashboard);
-                    fragmentManager(actualFragment = new DailyOffer());
+                case R.id.navigation_profile:
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Profile()).commit();
                     return true;
-                case R.id.navigation_notifications:
-                    mTextMessage.setText(R.string.title_notifications);
-                    fragmentManager(actualFragment = new Reservation());
+                case R.id.navigation_dailyoffer:
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new DailyOffer()).commit();
+                    return true;
+                case R.id.navigation_reservation:
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Reservation()).commit();
                     return true;
             }
             return false;
@@ -43,20 +40,11 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mTextMessage = (TextView) findViewById(R.id.message);
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-    }
-
-    private void fragmentManager(Fragment f){
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        if(f == null){
-            getSupportFragmentManager().beginTransaction().remove(actualFragment).commit();
-        }
-        else{
-            ft.replace(R.id.fragment_container, f);
-            ft.commit();
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    new Home()).commit();
         }
     }
 
