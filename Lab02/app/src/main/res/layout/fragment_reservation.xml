@@ -6,13 +6,9 @@
     tools:context=".Reservation">
 
     <!-- TODO: Update blank fragment layout -->
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/reservation_list"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        >
-    </ListView>
+        android:layout_height="match_parent"
+        android:id="@+id/reservation_list"/>
 
 </FrameLayout>

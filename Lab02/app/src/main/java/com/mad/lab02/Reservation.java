@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +17,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
 
 /**
@@ -35,70 +44,19 @@ public class Reservation extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager layoutManager;
+
 
     String [] names = {"carlo", "fede", "davide", "marco"};
     String [] addrs = {"via uno 1", "via due 2", "via tre 3", "via quattro 4"};
     String [] cells = {"123", "124", "125", "126"};
     Integer [] imgs = {R.drawable.profile_drhouse, R.drawable.profile_goku, R.drawable.profile_link, R.drawable.profile_vegeta};
 
-    private OnFragmentInteractionListener mListener;
+    ArrayList<Reservation_item> items = new ArrayList<Reservation_item>();
 
-    class ResListView extends ArrayAdapter<String> {
-        private String [] names;
-        private String [] addrs;
-        private String [] cells;
-        private Integer [] imgs;
-        private Activity context;
-        public ResListView (Activity context, String[] names, String[] addrs, String[] cells, Integer[] imgs){
-            super(context, R.layout.reservation_listview, names);
-            this.context=context;
-            this.names=names;
-            this.addrs=addrs;
-            this.cells=cells;
-            this.imgs=imgs;
-        }
-
-        @Override
-        public boolean isEnabled(int position) {
-            return false;
-        }
-
-        @NonNull
-        @Override
-        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            View r = convertView;
-            ViewHolder viewHolder = null;
-            if(r==null){
-                LayoutInflater layoutInflater = context.getLayoutInflater();
-                r=layoutInflater.inflate(R.layout.reservation_listview, null);
-                viewHolder = new ViewHolder(r);
-                r.setTag(viewHolder);
-            }
-            else{
-                viewHolder = (ViewHolder) r.getTag();
-            }
-            viewHolder.imw.setImageResource(imgs[position]);
-            viewHolder.tw1.setText(names[position]);
-            viewHolder.tw2.setText(addrs[position]);
-            viewHolder.tw3.setText(cells[position]);
-            return r;
-        }
-        class ViewHolder
-        {
-            TextView tw1;
-            TextView tw2;
-            TextView tw3;
-            ImageView imw;
-            ViewHolder(View v){
-                tw1=(TextView)v.findViewById(R.id.listview_name);
-                tw2=(TextView)v.findViewById(R.id.listview_address);
-                tw3=(TextView)v.findViewById(R.id.listview_cellphone);
-                imw=(ImageView)v.findViewById(R.id.profile_image);
-
-            }
-
-        }
-    }
+    private Reservation.OnFragmentInteractionListener mListener;
     public Reservation() {
         // Required empty public constructor
     }
@@ -135,9 +93,17 @@ public class Reservation extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_reservation, container, false);
-        ListView reservations = (ListView) view.findViewById(R.id.reservation_list);
-        ResListView myview = new ResListView(getActivity(), names, addrs, cells, imgs);
-        reservations.setAdapter(myview);
+
+        for (int i=0; i<4; i++){
+            Reservation_item r = new Reservation_item(names[i], addrs[i], cells[i], imgs[i]);
+            items.add(r);
+        }
+
+        recyclerView = view.findViewById(R.id.reservation_list);
+        mAdapter = new RecyclerAdapter(getContext(), items);
+        layoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setAdapter(mAdapter);
+        recyclerView.setLayoutManager(layoutManager);
 
         return view;
     }
