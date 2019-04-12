@@ -1,29 +1,16 @@
 package com.mad.lab02;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 
 
 /**
@@ -54,7 +41,7 @@ public class Reservation extends Fragment {
     String [] cells = {"123", "124", "125", "126"};
     Integer [] imgs = {R.drawable.profile_drhouse, R.drawable.profile_goku, R.drawable.profile_link, R.drawable.profile_vegeta};
 
-    ArrayList<Reservation_item> items = new ArrayList<Reservation_item>();
+    ArrayList<ReservationItem> items = new ArrayList<ReservationItem>();
 
     private Reservation.OnFragmentInteractionListener mListener;
     public Reservation() {
@@ -95,12 +82,12 @@ public class Reservation extends Fragment {
         View view = inflater.inflate(R.layout.fragment_reservation, container, false);
 
         for (int i=0; i<4; i++){
-            Reservation_item r = new Reservation_item(names[i], addrs[i], cells[i], imgs[i]);
+            ReservationItem r = new ReservationItem(names[i], addrs[i], cells[i], imgs[i]);
             items.add(r);
         }
 
         recyclerView = view.findViewById(R.id.reservation_list);
-        mAdapter = new RecyclerAdapter(getContext(), items);
+        mAdapter = new RecyclerAdapterReservation(getContext(), items);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setAdapter(mAdapter);
         recyclerView.setLayoutManager(layoutManager);

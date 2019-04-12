@@ -8,29 +8,34 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyViewHolder> {
-    private ArrayList<Reservation_item> items;
+public class RecyclerAdapterReservation extends RecyclerView.Adapter<RecyclerAdapterReservation.MyViewHolder> {
+    private ArrayList<ReservationItem> items;
     private LayoutInflater mInflater;
 
-    public RecyclerAdapter(Context context, ArrayList<Reservation_item> items){
+    public RecyclerAdapterReservation(Context context, ArrayList<ReservationItem> items){
         mInflater = LayoutInflater.from(context);
         this.items = items;
     }
     @NonNull
     @Override
-    public RecyclerAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int position) {
+    public RecyclerAdapterReservation.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int position) {
         View view = mInflater.inflate(R.layout.reservation_listview, parent, false);
 
+        ImageView ciao = view.findViewById(R.id.confirm_reservation);
+
+        ciao.setOnClickListener(e->{
+            Toast.makeText(view.getContext(), "DIOOOOOo", Toast.LENGTH_SHORT).show();
+        });
         return new MyViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerAdapter.MyViewHolder myViewHolder, int position) {
-        Reservation_item mCurrent = items.get(position);
+    public void onBindViewHolder(@NonNull RecyclerAdapterReservation.MyViewHolder myViewHolder, int position) {
+        ReservationItem mCurrent = items.get(position);
         myViewHolder.name.setText(mCurrent.getName());
         myViewHolder.addr.setText(mCurrent.getAddr());
         myViewHolder.cell.setText(mCurrent.getCell());

@@ -1,16 +1,16 @@
 package com.mad.lab02;
 
-public class Reservation_item {
+public class ReservationItem {
     private String name;
     private String addr;
     private String cell;
     private Integer img;
 
-    public Reservation_item() {
+    public ReservationItem() {
         //empty contructor
     }
 
-    public Reservation_item(String name, String addr, String cell, Integer img) {
+    public ReservationItem(String name, String addr, String cell, Integer img) {
         this.name = name;
         this.addr = addr;
         this.cell = cell;
