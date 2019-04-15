@@ -1,11 +1,13 @@
 package com.mad.lab02;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,17 +33,20 @@ public class Reservation extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private RecyclerView recyclerView;
-    private RecyclerView.Adapter mAdapter;
+    private RecyclerView recyclerView,recyclerView_accepted;
+    private RecyclerView.Adapter mAdapter,mAdapter_accepted;
     private RecyclerView.LayoutManager layoutManager;
 
+    private SharedPreferences reservation_data;
 
-    String [] names = {"carlo", "fede", "davide", "marco"};
-    String [] addrs = {"via uno 1", "via due 2", "via tre 3", "via quattro 4"};
-    String [] cells = {"123", "124", "125", "126"};
+
+    String [] names = {"Carlo Negr", "Federico Gianno", "Davide Gallotti", "Marco Longo"};
+    String [] addrs = {"Via Luserna di Rora' 14", "Via Luserna di Rora' 14", "Via Cesana 63", "Via Germanasca 12"};
+    String [] cells = {"334 8400234", "327 12983405", "334 9072123", "338 76212343"};
     Integer [] imgs = {R.drawable.profile_drhouse, R.drawable.profile_goku, R.drawable.profile_link, R.drawable.profile_vegeta};
 
     ArrayList<ReservationItem> items = new ArrayList<ReservationItem>();
+    ArrayList<ReservationItem> accepted_items = new ArrayList<ReservationItem>();
 
     private Reservation.OnFragmentInteractionListener mListener;
     public Reservation() {
@@ -73,24 +78,63 @@ public class Reservation extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        String name;
+        String address;
+        String cell;
+        Integer num = 0;
+
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_reservation, container, false);
 
-        for (int i=0; i<4; i++){
-            ReservationItem r = new ReservationItem(names[i], addrs[i], cells[i], imgs[i]);
+        reservation_data = getContext().getSharedPreferences("reservation_data",0);
+
+        while(( name = reservation_data.getString("Name "+ num.toString(),null)) != null) {
+            Log.d("NUMBER",name);
+            address = reservation_data.getString("Address "+ num.toString(),null);
+            cell = reservation_data.getString("Cell "+ num.toString(),null);
+            ReservationItem r = new ReservationItem(name, address, cell, imgs[num]);
             items.add(r);
+
+            num++;
+        }
+
+        num = 0;
+        reservation_data = getContext().getSharedPreferences("reservation_data_accepted",0);
+        while(( name = reservation_data.getString("Name "+ num.toString(),null)) != null) {
+            address = reservation_data.getString("Address "+ num.toString(),null);
+            cell = reservation_data.getString("Cell "+ num.toString(),null);
+            ReservationItem r = new ReservationItem(name, address, cell, imgs[num]);
+            accepted_items.add(r);
+            num++;
+        }
+
+        if(num == 0 && items.size() == 0){
+
+                for (int i = 0; i < 4; i++) {
+                    ReservationItem r = new ReservationItem(names[i], addrs[i], cells[i], imgs[i]);
+                    items.add(r);
+                }
         }
 
         recyclerView = view.findViewById(R.id.reservation_list);
-        mAdapter = new RecyclerAdapterReservation(getContext(), items);
+        mAdapter = new RecyclerAdapterReservation(getContext(), items,this,0);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setAdapter(mAdapter);
         recyclerView.setLayoutManager(layoutManager);
+
+        Log.d("SHARED",": Okay");
+
+        recyclerView_accepted = view.findViewById(R.id.reservation_list_accepted);
+        mAdapter_accepted = new RecyclerAdapterReservation(getContext(), accepted_items,this,1);
+        layoutManager = new LinearLayoutManager(getContext());
+        recyclerView_accepted.setAdapter(mAdapter_accepted);
+        recyclerView_accepted.setLayoutManager(layoutManager);
 
         return view;
     }
@@ -101,6 +145,47 @@ public class Reservation extends Fragment {
             mListener.onFragmentInteraction(uri);
         }
     }
+
+    public void acceptOrder(int pos){
+        ReservationItem item = items.remove(pos);
+        accepted_items.add(item);
+        mAdapter_accepted.notifyItemInserted(accepted_items.size());
+
+        saveState("reservation_data",0);
+        saveState("reservation_data_accepted",1);
+    }
+    public void removeOrder(int pos){
+        items.remove(pos);
+        saveState("reservation_data",0);
+    }
+
+    private void saveState(String nameFile, int flag){
+
+        Integer num = 0;
+
+        reservation_data = getContext().getSharedPreferences(nameFile,0);
+        SharedPreferences.Editor editor = reservation_data.edit();
+
+        editor.clear().apply();
+
+        ArrayList<ReservationItem> temp;
+        if(flag == 0){
+            temp = items;
+        }
+        else{
+            temp = accepted_items;
+        }
+
+        for(ReservationItem i : temp){
+            editor.putString("Name " + num.toString(), i.getName());
+            editor.putString("Address " + num.toString(), i.getAddr());
+            editor.putString("Cell " + num.toString(), i.getCell());
+            num++;
+        }
+
+        editor.apply();
+    }
+
 
     @Override
     public void onAttach(Context context) {
@@ -133,4 +218,7 @@ public class Reservation extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
+
+
+
 }
