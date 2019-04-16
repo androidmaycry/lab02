@@ -23,14 +23,13 @@ public class RecyclerAdapterReservation extends RecyclerView.Adapter<RecyclerAda
     private Reservation reservation;
     private int flag;
 
-
-
     public RecyclerAdapterReservation(Context context, ArrayList<ReservationItem> items, Reservation reservation,int flag){
         mInflater = LayoutInflater.from(context);
         this.items = items;
         this.reservation = reservation;
         this.flag = flag;
     }
+
     @NonNull
     @Override
     public RecyclerAdapterReservation.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent,int position) {
@@ -38,6 +37,7 @@ public class RecyclerAdapterReservation extends RecyclerView.Adapter<RecyclerAda
 
         ImageView confirm = view.findViewById(R.id.confirm_reservation);
         ImageView delete = view.findViewById(R.id.delete_reservation);
+        ImageView viewOrder = view.findViewById(R.id.open_reservation);
 
 
         if(flag == 1) {
@@ -47,22 +47,23 @@ public class RecyclerAdapterReservation extends RecyclerView.Adapter<RecyclerAda
         confirm.setOnClickListener(e->{
             TextView text = view.findViewById(R.id.listview_cellphone);
             int pos = findPos(text.getText().toString());
-            Toast.makeText(view.getContext(), "Prenotazione confermata", Toast.LENGTH_SHORT).show();
             reservation.acceptOrder(pos);
-            notifyItemRemoved(pos);
         });
 
         delete.setOnClickListener( e ->{
             TextView text = view.findViewById(R.id.listview_cellphone);
             int pos = findPos(text.getText().toString());
             reservation.removeOrder(pos);
-            notifyItemRemoved(pos);
+        });
+
+        view.setOnClickListener(e->{
+            TextView text = view.findViewById(R.id.listview_cellphone);
+            int pos = findPos(text.getText().toString());
+            reservation.viewOrder(pos,flag);
         });
 
         return new MyViewHolder(view);
     }
-
-
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerAdapterReservation.MyViewHolder myViewHolder,int position) {
@@ -72,12 +73,7 @@ public class RecyclerAdapterReservation extends RecyclerView.Adapter<RecyclerAda
         myViewHolder.addr.setText(mCurrent.getAddr());
         myViewHolder.cell.setText(mCurrent.getCell());
         myViewHolder.img.setImageResource(mCurrent.getImg());
-
-    }
-
-
-    public void notifyAdd(int pos){
-
+        myViewHolder.time.setText(mCurrent.getTime());
     }
 
     @Override
@@ -91,6 +87,7 @@ public class RecyclerAdapterReservation extends RecyclerView.Adapter<RecyclerAda
         TextView addr;
         TextView cell;
         ImageView img;
+        TextView time;
 
         public MyViewHolder(View itemView){
             super(itemView);
@@ -98,6 +95,7 @@ public class RecyclerAdapterReservation extends RecyclerView.Adapter<RecyclerAda
             addr = itemView.findViewById(R.id.listview_address);
             cell = itemView.findViewById(R.id.listview_cellphone);
             img = itemView.findViewById(R.id.profile_image);
+            time = itemView.findViewById(R.id.textView_time);
         }
     }
 

@@ -1,20 +1,26 @@
 package com.mad.lab02;
 
+import java.util.ArrayList;
+
 public class ReservationItem {
     private String name;
     private String addr;
     private String cell;
     private Integer img;
+    private String time;
+    private ArrayList<String> order;
 
     public ReservationItem() {
         //empty contructor
     }
 
-    public ReservationItem(String name, String addr, String cell, Integer img) {
+    public ReservationItem(String name, String addr, String cell, Integer img,String time,ArrayList<String> order) {
         this.name = name;
         this.addr = addr;
         this.cell = cell;
         this.img = img;
+        this.time = time;
+        this.order = order;
     }
 
     public String getName() {
@@ -48,4 +54,8 @@ public class ReservationItem {
     public void setImg(Integer img) {
         this.img = img;
     }
+
+    public String getTime(){return time;}
+
+    public ArrayList<String> getOrder(){return order;}
 }

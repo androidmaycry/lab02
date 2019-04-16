@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.Vector;
 
 
 /**
@@ -40,15 +42,29 @@ public class Reservation extends Fragment {
     private SharedPreferences reservation_data;
 
 
-    String [] names = {"Carlo Negr", "Federico Gianno", "Davide Gallotti", "Marco Longo"};
+    /* FOR SIMULATION */
+    String [] names = {"Carlo Negri", "Federico Gianno", "Davide Gallotti", "Marco Longo"};
     String [] addrs = {"Via Luserna di Rora' 14", "Via Luserna di Rora' 14", "Via Cesana 63", "Via Germanasca 12"};
     String [] cells = {"334 8400234", "327 12983405", "334 9072123", "338 76212343"};
-    Integer [] imgs = {R.drawable.profile_drhouse, R.drawable.profile_goku, R.drawable.profile_link, R.drawable.profile_vegeta};
+    String [] times = {"12:30", "12:34", "12:45", "13:25"};
+    Integer [] imgs = {R.drawable.person, R.drawable.person, R.drawable.person, R.drawable.person};
+
+    String [][] order = {   {"ChickenBurger x4","Cotoletta di maiale x3"},
+                            {"Pizza Margherita x5"},
+                            {"Insalata con mandorle x1", "Pizza Napoli x4"},
+                            {"Pasta Amatriciana x1", "Pasta ai 4 formaggi x3"}
+                         };
 
     ArrayList<ReservationItem> items = new ArrayList<ReservationItem>();
     ArrayList<ReservationItem> accepted_items = new ArrayList<ReservationItem>();
 
+    ArrayList [] orders_list = new ArrayList[4];
+
+
     private Reservation.OnFragmentInteractionListener mListener;
+    private RecyclerAdapterOrdered mAdapter_ordered;
+    private RecyclerView recyclerView_ordered;
+
     public Reservation() {
         // Required empty public constructor
     }
@@ -79,6 +95,13 @@ public class Reservation extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
+        for(int i=0;i<4;i++){
+            orders_list[i] = new ArrayList<String>();
+            for(String s : order[i]){
+                orders_list[i].add(s);
+            }
+        }
+
     }
 
     @Override
@@ -87,18 +110,31 @@ public class Reservation extends Fragment {
         String name;
         String address;
         String cell;
-        Integer num = 0;
+        String time;
+        String s;
+        int img;
+        Integer num = 0,num_order=0;
 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_reservation, container, false);
 
         reservation_data = getContext().getSharedPreferences("reservation_data",0);
-
         while(( name = reservation_data.getString("Name "+ num.toString(),null)) != null) {
+
+            num_order=0;
+            ArrayList<String> order_list = new ArrayList<String>();
             Log.d("NUMBER",name);
             address = reservation_data.getString("Address "+ num.toString(),null);
             cell = reservation_data.getString("Cell "+ num.toString(),null);
-            ReservationItem r = new ReservationItem(name, address, cell, imgs[num]);
+            img = reservation_data.getInt("Photo " + num.toString(),0);
+            time = reservation_data.getString("Time "+ num.toString(),null);
+
+            while((s = reservation_data.getString("Order " + num.toString() + "," + num_order.toString(),null))!= null){
+                order_list.add(s);
+                num_order++;
+            }
+
+            ReservationItem r = new ReservationItem(name, address, cell, img,time,order_list);
             items.add(r);
 
             num++;
@@ -107,9 +143,20 @@ public class Reservation extends Fragment {
         num = 0;
         reservation_data = getContext().getSharedPreferences("reservation_data_accepted",0);
         while(( name = reservation_data.getString("Name "+ num.toString(),null)) != null) {
+
+            num_order=0;
+            ArrayList<String> order_list = new ArrayList<String>();
             address = reservation_data.getString("Address "+ num.toString(),null);
             cell = reservation_data.getString("Cell "+ num.toString(),null);
-            ReservationItem r = new ReservationItem(name, address, cell, imgs[num]);
+            img = reservation_data.getInt("Photo " + num.toString(),0);
+            time = reservation_data.getString("Time "+ num.toString(),null);
+
+            while((s = reservation_data.getString("Order " + num.toString() + "," + num_order.toString(),null))!= null){
+                order_list.add(s);
+                num_order++;
+            }
+
+            ReservationItem r = new ReservationItem(name, address, cell, img,time,order_list);
             accepted_items.add(r);
             num++;
         }
@@ -117,12 +164,12 @@ public class Reservation extends Fragment {
         if(num == 0 && items.size() == 0){
 
                 for (int i = 0; i < 4; i++) {
-                    ReservationItem r = new ReservationItem(names[i], addrs[i], cells[i], imgs[i]);
+                    ReservationItem r = new ReservationItem(names[i], addrs[i], cells[i], imgs[i],times[i],orders_list[i]);
                     items.add(r);
                 }
         }
 
-        recyclerView = view.findViewById(R.id.reservation_list);
+        recyclerView = view.findViewById(R.id.ordered_list);
         mAdapter = new RecyclerAdapterReservation(getContext(), items,this,0);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setAdapter(mAdapter);
@@ -147,21 +194,90 @@ public class Reservation extends Fragment {
     }
 
     public void acceptOrder(int pos){
-        ReservationItem item = items.remove(pos);
-        accepted_items.add(item);
-        mAdapter_accepted.notifyItemInserted(accepted_items.size());
 
-        saveState("reservation_data",0);
-        saveState("reservation_data_accepted",1);
+        AlertDialog reservationDialog = new AlertDialog.Builder(this.getContext()).create();
+        LayoutInflater inflater = LayoutInflater.from(this.getContext());
+        final View view = inflater.inflate(R.layout.reservation_dialog, null);
+
+
+        view.findViewById(R.id.button_confirm).setOnClickListener(e ->{
+            ReservationItem item = items.remove(pos);
+            accepted_items.add(item);
+            mAdapter_accepted.notifyItemInserted(accepted_items.size());
+
+            saveState("reservation_data",0);
+            saveState("reservation_data_accepted",1);;
+
+            mAdapter.notifyItemRemoved(pos);
+            reservationDialog.dismiss();
+        });
+
+        view.findViewById(R.id.button_cancel).setOnClickListener(e ->{
+            reservationDialog.dismiss();
+        });
+
+        reservationDialog.setView(view);
+        reservationDialog.setTitle("Confermare prenotazione?");
+
+        reservationDialog.show();
     }
+
     public void removeOrder(int pos){
-        items.remove(pos);
-        saveState("reservation_data",0);
+
+        AlertDialog reservationDialog = new AlertDialog.Builder(this.getContext()).create();
+        LayoutInflater inflater = LayoutInflater.from(this.getContext());
+        final View view = inflater.inflate(R.layout.reservation_dialog, null);
+
+        view.findViewById(R.id.button_confirm).setOnClickListener(e ->{
+            items.remove(pos);
+            mAdapter.notifyItemRemoved(pos);
+            saveState("reservation_data",0);
+            reservationDialog.dismiss();
+        });
+        view.findViewById(R.id.button_cancel).setOnClickListener(e ->{
+            reservationDialog.dismiss();
+        });
+
+        reservationDialog.setView(view);
+        reservationDialog.setTitle("Cancellare prenotazione?");
+
+        reservationDialog.show();
+    }
+
+    public void viewOrder(int pos,int flag){
+
+        ReservationItem i;
+        AlertDialog reservationDialog = new AlertDialog.Builder(this.getContext()).create();
+        LayoutInflater inflater = LayoutInflater.from(this.getContext());
+        final View view = inflater.inflate(R.layout.dishes_list_dialog, null);
+
+        if(flag == 0){
+            i = items.get(pos);
+        }
+        else{
+            i = accepted_items.get(pos);
+        }
+
+        recyclerView_ordered = view.findViewById(R.id.ordered_list);
+        mAdapter_ordered = new RecyclerAdapterOrdered(reservationDialog.getContext(),i.getOrder());
+        layoutManager = new LinearLayoutManager(reservationDialog.getContext());
+        recyclerView_ordered.setAdapter(mAdapter_ordered);
+        recyclerView_ordered.setLayoutManager(layoutManager);
+
+        view.findViewById(R.id.back).setOnClickListener(e ->{
+            reservationDialog.dismiss();
+        });
+
+        reservationDialog.setView(view);
+        reservationDialog.setTitle("Ordine");
+
+        reservationDialog.show();
+
     }
 
     private void saveState(String nameFile, int flag){
 
-        Integer num = 0;
+        Integer num = 0,num_order=0;
 
         reservation_data = getContext().getSharedPreferences(nameFile,0);
         SharedPreferences.Editor editor = reservation_data.edit();
@@ -180,6 +296,15 @@ public class Reservation extends Fragment {
             editor.putString("Name " + num.toString(), i.getName());
             editor.putString("Address " + num.toString(), i.getAddr());
             editor.putString("Cell " + num.toString(), i.getCell());
+            editor.putInt("Photo " + num.toString(), i.getImg());
+            editor.putString("Time " + num.toString(), i.getTime());
+
+            ArrayList<String> order = i.getOrder();
+            for(String s : order){
+                editor.putString("Order "+num.toString()+","+ num_order.toString(),s);
+                num_order++;
+            }
+
             num++;
         }
 
@@ -217,6 +342,11 @@ public class Reservation extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+
+    public void seeItemList(ReservationItem item){
+
     }
 
 
