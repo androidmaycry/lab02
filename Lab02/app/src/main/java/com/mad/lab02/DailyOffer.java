@@ -1,78 +1,212 @@
 package com.mad.lab02;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.File;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link DailyOffer.OnFragmentInteractionListener} interface
+ * {@link OnFragmentInteractionListener} interface
  * to handle interaction events.
  * Use the {@link DailyOffer#newInstance} factory method to
  * create an instance of this fragment.
  */
 public class DailyOffer extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private static final String MyOFFER = "Daily_Offer";
+    private static boolean OnStartup = false;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private RecyclerView recyclerView;
+    private RecyclerAdapterDish mAdapter;
+    private RecyclerView.LayoutManager layoutManager;
 
     private OnFragmentInteractionListener mListener;
+
+    private static final String Name = "keyName";
+    private static final String Description = "keyDescription";
+    private static final String Price = "keyEuroPrice";
+    private static final String Photo ="keyPhotoPath";
+    private static final String Quantity = "keyQuantity";
+    private static final String NItem = "NItemKey";
+    private static ArrayList<DailyOfferItem> dataList;
+    private SharedPreferences dishes_data;
 
     public DailyOffer() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment DailyOffer.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static DailyOffer newInstance(String param1, String param2) {
+    public static DailyOffer newInstance() {
         DailyOffer fragment = new DailyOffer();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+
         fragment.setArguments(args);
+
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+
+        setHasOptionsMenu(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_daily_offer, container, false);
+        View view = inflater.inflate(R.layout.fragment_dailyoffer, container, false);
+
+        getData();
+
+        mAdapter = new RecyclerAdapterDish(getContext(), dataList,this);
+        layoutManager = new LinearLayoutManager(getContext());
+
+        recyclerView = view.findViewById(R.id.dish_list);
+        recyclerView.setAdapter(mAdapter);
+        recyclerView.setLayoutManager(layoutManager);
+
+        OnStartup = true;
+
+        return view;
+    }
+
+    public void editDailyOffer(int pos){
+        Log.d("DailyOffer: ", "edit()");
+
+        Intent editOffer = new Intent(getContext(), EditOffer.class);
+        editOffer.putExtra("Existing", pos);
+        startActivityForResult(editOffer, 0);
+    }
+
+    private void getData(){
+        SharedPreferences offer_data = Objects.requireNonNull(this.getActivity()).getSharedPreferences(MyOFFER, MODE_PRIVATE);
+
+        Integer num = 0;
+
+        String name;
+        String desc;
+        String photoPath;
+        float price;
+        int quantity;
+
+
+        dataList = new ArrayList<>();
+        dishes_data = getContext().getSharedPreferences("dishes",0);
+        while(( name = dishes_data.getString("Name " + num.toString(), null)) != null){
+            desc = dishes_data.getString("Desc " + num.toString(), null);
+            photoPath = dishes_data.getString("Photo " + num.toString(), null);
+            price = dishes_data.getFloat("Price " + num.toString(), 0);
+            quantity = dishes_data.getInt("Quantity " + num.toString(), 0);
+            DailyOfferItem i = new DailyOfferItem(name,desc,price,quantity,photoPath);
+            dataList.add(i);
+            num++;
+        }
+    }
+
+    public void deleteDish(int pos){
+
+        AlertDialog reservationDialog = new AlertDialog.Builder(this.getContext()).create();
+        LayoutInflater inflater = LayoutInflater.from(this.getContext());
+        final View view = inflater.inflate(R.layout.reservation_dialog, null);
+
+        view.findViewById(R.id.button_confirm).setOnClickListener(e ->{
+
+            SharedPreferences offer_data = getContext().getSharedPreferences(MyOFFER, MODE_PRIVATE);
+            SharedPreferences.Editor editor = offer_data.edit();
+            editor.putString(Integer.toString(pos), "null");
+            editor.commit();
+
+            dataList.remove(pos);
+            mAdapter.notifyItemRemoved(pos);
+
+            reservationDialog.dismiss();
+        });
+        view.findViewById(R.id.button_cancel).setOnClickListener(e ->{
+            reservationDialog.dismiss();
+        });
+
+        reservationDialog.setView(view);
+        reservationDialog.setTitle("Delete Dish?");
+
+        reservationDialog.show();
+    }
+    public void saveData(){
+        Integer num = 0;
+
+        dishes_data = getContext().getSharedPreferences("dishes",0);
+        SharedPreferences.Editor editor = dishes_data.edit();
+        editor.clear().apply();
+
+        ArrayList<DailyOfferItem> temp = dataList;
+        for(DailyOfferItem i : temp){
+            editor.putString("Name " + num.toString(), i.getName());
+            editor.putString("Desc " + num.toString(), i.getDesc());
+            editor.putString("Photo " + num.toString(), i.getPhotoPath());
+            editor.putFloat("Price " + num.toString(), i.getPrice());
+            editor.putInt("Quantity "  + num.toString(), i.getQuantity());
+            num++;
+        }
+
+        editor.apply();
+    }
+
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        saveData();
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onPause() {
+        super.onPause();
+        saveData();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_daily, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch (id){
+            case R.id.add:
+                Intent edit_profile = new Intent(getContext(), EditOffer.class);
+                startActivityForResult(edit_profile, 0);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -80,6 +214,41 @@ public class DailyOffer extends Fragment {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
         }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(data != null && resultCode == 1){
+            getIntentData(data, false);
+            //mAdapter.notifyDataSetChanged();
+            mAdapter.notifyItemInserted(dataList.size());
+        }
+        else if(data != null && resultCode == 2){
+            getIntentData(data, true);
+            mAdapter.notifyDataSetChanged();
+            //mAdapter.notifyItemChanged(data.getIntExtra("EDIT_PHOTO_POS", 0));
+        }
+    }
+
+    public void getIntentData(Intent data, boolean editing){
+        DailyOfferItem item = new DailyOfferItem();
+
+        item.setName(data.getStringExtra(Name));
+        item.setDesc(data.getStringExtra(Description));
+        item.setPrice(data.getFloatExtra(Price, 0));
+        item.setQuantity(data.getIntExtra(Quantity, 0));
+        item.setPhotoPath(data.getStringExtra(Photo));
+
+        if(editing){
+            Log.d("DELETING: ", "Item n " + data.getIntExtra("EDIT_PHOTO_POS", 0));
+            dataList.set(data.getIntExtra("EDIT_PHOTO_POS", 0), item);
+        }
+        else
+            dataList.add(item);
     }
 
     @Override
